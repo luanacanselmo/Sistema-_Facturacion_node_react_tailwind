@@ -1,96 +1,102 @@
 import { useState, useEffect } from "react";
 import Modal from "react-modal";
-import EditarProducto from "./EditarProducto";
+import EditarFacturas from "./EditarFacturas";
+import ConfirmacionModal from "./ConfirmacionModal";
 import "../style/style.css"; // Importa el archivo CSS
 
-Modal.setAppElement("#root"); // Establece el elemento raíz para accesibilidad
-
-export default function ProducList() {
-  const [productos, setProductos] = useState([]);
-  const [editingProduct, setEditingProduct] = useState(null);
+export default function FacturaList() {
+  const [facturas, setFacturas] = useState([]);
+  const [editingFacturas, setEditingFacturas] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [confirmacionIsOpen, setConfirmacionIsOpen] = useState(false);
+  const [itemAEliminar, setItemAEliminar] = useState(null);
 
   useEffect(() => {
-    const fetchProductos = async () => {
+    const fetchFacturas = async () => {
       try {
-        const response = await fetch("/api/productos");
+        const response = await fetch("/api/FacturaList");
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
         const data = await response.json();
-        setProductos(data);
+        setFacturas(data);
       } catch (error) {
-        console.error("Error fetching productos:", error);
+        console.error("Error fetching facturas:", error);
       }
     };
 
-    fetchProductos();
+    fetchFacturas();
   }, []);
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`/api/producto/${id}`, {
+      const response = await fetch(`/api/factura/${id}`, {
         method: "DELETE",
       });
       if (response.ok) {
-        setProductos(productos.filter((producto) => producto.id !== id));
+        setFacturas(facturas.filter((factura) => factura.id !== id));
       } else {
-        console.error("Failed to delete product");
+        console.error("Failed to delete factura");
       }
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error("Error deleting factura:", error);
     }
   };
 
-  const handleUpdate = async (updatedProduct) => {
+  const handleUpdate = async (updatedFactura) => {
     try {
-      const response = await fetch(`/api/producto/${updatedProduct.id}`, {
+      const response = await fetch(`/api/factura/${updatedFactura.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedProduct),
+        body: JSON.stringify(updatedFactura),
       });
       if (response.ok) {
-        setProductos(
-          productos.map((producto) =>
-            producto.id === updatedProduct.id ? updatedProduct : producto
+        setFacturas(
+          facturas.map((factura) =>
+            factura.id === updatedFactura.id ? updatedFactura : factura
           )
         );
-        setEditingProduct(null);
+        setEditingFacturas(null);
         setModalIsOpen(false);
       } else {
-        console.error("Failed to update product");
+        console.error("Failed to update factura");
       }
     } catch (error) {
-      console.error("Error updating product:", error);
+      console.error("Error updating factura:", error);
     }
   };
 
-  const handleEditClick = (producto) => {
-    setEditingProduct(producto);
+  const handleEditClick = (factura) => {
+    setEditingFacturas(factura);
     setModalIsOpen(true);
+  };
+
+  const handleDeleteClick = (factura) => {
+    setItemAEliminar(factura);
+    setConfirmacionIsOpen(true);
   };
 
   return (
     <div className="overflow-x-auto py-6 px-4">
-      <h1 className="text-4xl font-bold mb-20 p-6 text-center">Productos</h1>
+      <h1 className="text-4xl font-bold mb-20 p-6 text-center">Facturas</h1>
 
       <div className="inline-block min-w-full bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nombre
+                Cliente
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Código
+                Fecha
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Precio
+                Total
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cantidad
+                ID
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
@@ -98,29 +104,29 @@ export default function ProducList() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {productos.map((producto) => (
-              <tr key={producto.id}>
+            {facturas.map((factura) => (
+              <tr key={factura.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {producto.nombrepro}
+                  {factura.cliente_id}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {producto.codigopro}
+                  {factura.fecha}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {producto.preciopro}
+                  {factura.total}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {producto.cantidad}
+                  {factura.id}
                 </td>
                 <td className="table-actions">
                   <button
-                    onClick={() => handleDelete(producto.id)}
-                    className="btn btn-delete"
+                    onClick={() => handleDeleteClick(factura)}
+                    className="btn btn-delete btn-black"
                   >
                     Eliminar
                   </button>
                   <button
-                    onClick={() => handleEditClick(producto)}
+                    onClick={() => handleEditClick(factura)}
                     className="btn btn-edit"
                   >
                     Modificar
@@ -134,18 +140,26 @@ export default function ProducList() {
         <Modal
           isOpen={modalIsOpen}
           onRequestClose={() => setModalIsOpen(false)}
-          contentLabel="Editar Producto"
+          contentLabel="Editar factura"
           className="modal"
           overlayClassName="overlay"
         >
-          {editingProduct && (
-            <EditarProducto
-              producto={editingProduct}
+          {editingFacturas && (
+            <EditarFacturas
+              factura={editingFacturas}
               onUpdate={handleUpdate}
               onClose={() => setModalIsOpen(false)}
             />
           )}
         </Modal>
+
+        <ConfirmacionModal
+          isOpen={confirmacionIsOpen}
+          onClose={() => setConfirmacionIsOpen(false)}
+          onConfirm={handleDelete}
+          item={itemAEliminar}
+          itemType="factura"
+        />
       </div>
     </div>
   );

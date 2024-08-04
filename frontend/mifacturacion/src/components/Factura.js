@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../style/Factura.css"; // Asegúrate de tener este archivo CSS
+import Facturapdf from './Facturapdf';
+
 
 export default function Factura() {
   const [datosFactura, setFormData] = useState({
-    numeroFactura: "",
+    numeroFactura: "", 
     fecha: "",
     cuitCliente: "",
     nombreCliente: "",
@@ -12,41 +14,83 @@ export default function Factura() {
     direccionCliente: "",
     items: [
       {
+
         codigo: "",
         descripcion: "",
-        cantidad: "",
-        precio: "",
+        cantidad: 1,
+        precio: 0,
       },
     ],
   });
+  const [total, setTotal] = useState(0);
+  const [showPDF, setShowPDF] = useState(false); // Estado para manejar la visibilidad del PDF
+
+  // Asegúrate de que la función calcularTotal esté definida antes de usarla en useEffect
+  const calcularTotal = () => {
+    const total = datosFactura.items.reduce((acc, item) => acc + (item.cantidad * item.precio), 0);
+    setTotal(total);
+  };
+
+  useEffect(() => {
+    calcularTotal();
+  }, [datosFactura.items]);
 
   const handleChange = (e, index) => {
     const { name, value } = e.target;
     const items = [...datosFactura.items];
-    items[index][name] = value;
+    items[index][name] = name === "cantidad" ? parseInt(value) : value;
     setFormData({ ...datosFactura, items });
   };
 
   const handleFacturaChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...datosFactura, [name]: value });
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await fetch("/api/factura", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(datosFactura),
-    });
-
-    const data = await response.json();
+    try {
+      console.log("Datos de la factura a enviar:", {
+        cuitCliente: datosFactura.cuitCliente,
+        fecha: datosFactura.fecha,
+        total: total,
+        items: datosFactura.items.map(item => ({
+          codigo: item.codigo,
+          cantidad: item.cantidad
+        }))
+      });
+  
+      const response = await fetch("http://localhost:5000/api/factura", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          numeroFactura: datosFactura.numeroFactura,
+          cuitCliente: datosFactura.cuitCliente,
+          fecha: datosFactura.fecha,
+          total: total,
+          items: datosFactura.items.map(item => ({
+            codigo: item.codigo,
+            cantidad: item.cantidad
+          }))
+        }),
+      });
+      const data = await response.json();
     if (response.ok) {
+      setFormData(prevData => ({
+        ...prevData,
+        numeroFactura: data.facturaId // Asumiendo que el servidor devuelve el ID como número de factura
+      }));
       alert(data.message);
     } else {
-      alert(data.error);
+      throw new Error(data.error);
+    }
+    } catch (error) {
+      console.error("Error al guardar la factura:", error);
+      alert("Error al guardar la factura: " + error.message);
     }
   };
 
@@ -63,6 +107,8 @@ export default function Factura() {
         apellidoCliente: datosCliente.apellido,
         correoCliente: datosCliente.correo,
         direccionCliente: datosCliente.direccion,
+        telefonoCliente: datosCliente.direccion,
+
       }));
     } catch (error) {
       console.error("Error al buscar el cliente:", error);
@@ -93,13 +139,16 @@ export default function Factura() {
   const agregarItem = () => {
     setFormData((prevData) => ({
       ...prevData,
-      items: [...prevData.items, { codigo: "", descripcion: "", cantidad: "", precio: "" }],
+      items: [...prevData.items, { codigo: "", descripcion: "", cantidad: 1, precio: 0 }],
     }));
+  };
+  const handleDownloadPDF = () => {
+    setShowPDF(true); // Mostrar el PDF
   };
 
   return (
     <div className="raiz">
-      <h2 className="titulo">Factura</h2>
+      <h1 className="text-3xl font-bold text-center">Factura</h1>
       <form
         action="#"
         method="POST"
@@ -109,11 +158,13 @@ export default function Factura() {
         <div className="encabezado">
           <input
             type="text"
-            name="numeroFactura"
+            name="numerofactura"
             placeholder="Número de Factura"
             className="campo"
             value={datosFactura.numeroFactura}
-            readOnly
+            onChange={handleFacturaChange}
+
+            hidden
           />
           <input
             type="date"
@@ -131,7 +182,7 @@ export default function Factura() {
             className="campo"
             value={datosFactura.cuitCliente}
             onChange={handleFacturaChange}
-            onBlur={buscarCliente} // Llama a buscarCliente cuando el campo pierde el foco
+            onBlur={buscarCliente}
           />
           <input
             type="text"
@@ -150,7 +201,7 @@ export default function Factura() {
             readOnly
           />
           <input
-            type="text"
+            type="email"
             name="correoCliente"
             placeholder="Correo del Cliente"
             className="campo"
@@ -166,17 +217,17 @@ export default function Factura() {
             readOnly
           />
         </div>
-        <h4>Items</h4>
+        <h2 className="text-lg font-semibold mt-10">Productos</h2>
         {datosFactura.items.map((item, index) => (
-          <div key={index} className="item">
+          <div className="item" key={index}>
             <input
               type="text"
               name="codigo"
-              placeholder="Código"
+              placeholder="Código del Producto"
               className="campo"
               value={item.codigo}
               onChange={(e) => handleChange(e, index)}
-              onBlur={() => buscarProducto(index)} // Llama a buscarProducto cuando el campo pierde el foco
+              onBlur={() => buscarProducto(index)}
             />
             <input
               type="text"
@@ -204,16 +255,22 @@ export default function Factura() {
             />
           </div>
         ))}
-        <button type="button" className="boton" onClick={agregarItem}>
-          Agregar Item
+        <button type="button" onClick={agregarItem} className="mt-4">
+          Agregar producto
         </button>
-        <div className="total">
-          <strong>Total:</strong>
+        <div className="total mt-4">
+          <h3>Total: ${total.toFixed(2)}</h3>
         </div>
-        <button type="submit" className="boton">
-          Enviar Factura
+        <button type="submit" className="mt-4 bg-blue-500 text-white p-2 rounded">
+          Enviar
+        </button>
+        <button type="button" onClick={handleDownloadPDF} className="mt-4 bg-green-500 text-white p-2 rounded">
+          Generar PDF
         </button>
       </form>
+      {showPDF && <Facturapdf factura={{ ...datosFactura, total, numeroFactura: datosFactura.numeroFactura }} />}
     </div>
+    
+    
   );
 }

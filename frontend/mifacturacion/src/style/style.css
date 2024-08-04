@@ -1,24 +1,136 @@
 /* styles.css */
+
+/* Overlay and modal styles */
 .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.75);
-    z-index: 1000;
-  }
-  
-  .modal {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    max-width: 500px;
-    width: 100%;
-    z-index: 1001;
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 1000;
+}
+
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  z-index: 1001;
+}
+
+/* Table styles */
+.table-container {
+  max-width: 100%;
+  overflow-x: auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin-bottom: 1rem;
+}
+
+.table th, .table td {
+  padding: 1rem;
+  text-align: left;
+}
+
+.table th {
+  background-color: #f4f4f4;
+  color: #333;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.table tbody tr:hover {
+  background-color: #e2e2e2;
+}
+
+.table tbody td {
+  border-bottom: 1px solid #ddd;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.table-actions button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+.table-actions button:hover {
+  color: #0056b3;
+}
+
+/* Styled buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-delete {
+  background-color: #e3342f;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #cc1f1a;
+}
+
+.btn-edit {
+  background-color: #3490dc;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #2779bd;
+}
+
+/* Text alignment */
+.text-center {
+  text-align: center;
+}
+
+/* General styles */
+body {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #333;
+  text-align: center;
+}
